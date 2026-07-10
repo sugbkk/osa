@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fukuoka Trip 2026</title>
+    <style>
+        *, *::before, *::after { 
+            box-sizing: border-box; 
+        }
+
+        :root {
+            --sakura: #fdf2f4; --sky: #eef7fb; --mimosa: #fff9e6;
+            --accent-pink: #f2bac9; --accent-blue: #b4d4e2; --text: #5a5a5a;
+            --wishlist-yellow: #fffca3;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--sakura); color: var(--text); margin: 0; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 500px; background: white; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.05); }
+        
+        .toolbar { background: var(--mimosa); padding: 10px; text-align: center; font-size: 0.75rem; position: sticky; top: 0; z-index: 1001; border-bottom: 1px solid #eee; }
+        header { background: linear-gradient(135deg, var(--sakura), var(--sky)); padding: 30px 20px; text-align: center; }
+        h1 { margin: 0; font-size: 1.8rem; color: #888; letter-spacing: 2px; outline: none; white-space: pre-wrap; }
+        .subtitle { font-size: 0.9rem; color: #aaa; margin-top: 5px; font-style: italic; outline: none; white-space: pre-wrap; }
+
+        .nav { display: flex; background: white; border-bottom: 1px solid #eee; position: sticky; top: 37px; z-index: 1000; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-size: 0.7rem; font-weight: bold; color: #ccc; }
+        .tab-btn.active { color: var(--text); border-bottom: 3px solid var(--accent-pink); }
+        
+        .tab-content { padding: 20px; display: none; }
+        .tab-content.active { display: block; }
+
+        .flight-card { background: var(--sky); border-radius: 15px; padding: 15px; margin-bottom: 20px; border-left: 5px solid var(--accent-blue); font-size: 10pt; line-height: 1.4; outline: none; }
+
+        .day-block { margin-bottom: 35px; border-left: 3px solid var(--accent-pink); padding-left: 15px; }
+        .day-title { font-weight: bold; color: #d193a5; font-size: 13pt; margin-bottom: 15px; outline: none; white-space: pre-wrap; }
+        
+        .item-row { 
+            display: grid; 
+            grid-template-columns: 55px 1fr 30px 25px; 
+            align-items: start; 
+            gap: 10px; 
+            margin-bottom: 12px;
+        }
+
+        .time-box, .desc-box { font-size: 10pt; line-height: 1.4; outline: none; margin: 0; padding: 0; }
+        .time-box { color: #999; font-weight: bold; }
+        .link-input { font-size: 8pt; color: #aaa; border: none; border-bottom: 1px dashed #ddd; width: 100%; margin-top: 4px; outline: none; }
+        
+        .btn-del { color: #ffcccc; border: none; background: none; cursor: pointer; font-size: 14pt; line-height: 1.1; align-self: start; padding: 0; }
+        .btn-add { width: 100%; padding: 8px; border: 1px dashed #ddd; background: none; color: #bbb; cursor: pointer; border-radius: 8px; margin-top: 5px; font-size: 0.8rem; }
+
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .input-row { display: flex; gap: 8px; }
+        input, select { padding: 10px; border: 1px solid #eee; border-radius: 10px; flex: 1; outline: none; font-size: 10pt; width: 100%; /* 確保基本寬度正常 */ }
+        .btn-action { background: var(--accent-pink); color: white; border: none; border-radius: 10px; padding: 0 15px; cursor: pointer; font-size: 1.2rem; }
+
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f9f9f9; font-size: 10pt; }
+        .dest-tag { font-size: 8pt; background: var(--mimosa); padding: 3px 8px; border-radius: 6px; color: #9e8d5a; margin-left: 10px; font-weight: bold; outline: none; }
+
+        .status-badge { 
+            font-size: 8pt; 
+            padding: 4px 10px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold;
+            margin-bottom: 6px;
+            display: inline-block;
+        }
+        .status-wish { background: var(--wishlist-yellow); color: #7a7000; }
+        .status-must { background: #ffe3e3; color: #ff6b6b; }
+        .status-done { background: #e3f9e5; color: #51cf66; }
+
+        .rest-name { font-size: 12pt; font-weight: bold; display: block; margin-bottom: 2px; }
+        .cuisine-tag { font-size: 8pt; background: var(--sky); padding: 3px 8px; border-radius: 6px; color: #5a879e; font-weight: bold; white-space: nowrap; margin-right: 10px; }
+        .fav-right-controls { display: flex; align-items: center; }
+        .map-link { font-size: 1.3rem; text-decoration: none; transition: 0.2s; }
+        .map-link.inactive { opacity: 0.1; pointer-events: none; filter: grayscale(1); }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="toolbar">🍜 Everything perfectly aligned & synced for Fukuoka! 🍜</div>
+
+    <header>
+        <h1 contenteditable="true" id="trip-title" oninput="saveAll()">FUKUOKA 2026 ✈️</h1>
+        <div class="subtitle" contenteditable="true" id="trip-sub" oninput="saveAll()">Click here to edit trip details... ✏️</div>
+    </header>
+
+    <div class="nav">
+        <button class="tab-btn active" onclick="switchTab(event, 'tab-sched')">🗓️ SCHEDULE</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-buy')">🛍️ SHOPPING</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-fav')">⭐ FAVORITES</button>
+    </div>
+
+    <div id="tab-sched" class="tab-content active">
+        <select id="dayFilter" onchange="filterDays()" style="margin-bottom: 20px; width: 100%;">
+            <option value="all">📍 Show All Days</option>
+            <option value="d1">Day 1 - Arrival</option>
+            <option value="d2">Day 2</option>
+            <option value="d3">Day 3</option>
+            <option value="d4">Day 4</option>
+            <option value="d5">Day 5</option>
+            <option value="d6">Day 6</option>
+            <option value="d7">Day 7 - Departure</option>
+        </select>
+        <div id="flight-arrival-container"></div>
+        <div id="schedule-container"></div>
+        <div id="flight-departure-container"></div>
+    </div>
+
+    <div id="tab-buy" class="tab-content">
+        <div class="input-group">
+            <div class="input-row">
+                <input type="text" id="buy-name" placeholder="Item name...">
+                <input type="text" id="buy-dest" placeholder="Where to buy?" style="flex:0.7">
+                <button class="btn-action" onclick="addItem('buy')">+</button>
+            </div>
+        </div>
+        <div id="buy-list"></div>
+    </div>
+
+    <div id="tab-fav" class="tab-content">
+        <div class="input-group" style="background: #fdfdfd; padding: 15px; border-radius: 15px; border: 1px solid #eee;">
+            <input type="text" id="fav-name" placeholder="Spot / Restaurant Name" style="margin-bottom: 5px; width: 100%;">
+            <div class="input-row">
+                <input type="text" id="fav-cuisine" placeholder="Category / Cuisine">
+                <input type="url" id="fav-url" placeholder="Google Maps Link">
+            </div>
+            <button class="btn-action" style="width: 100%; margin-top: 5px;" onclick="addItem('fav')">Bookmark 📌</button>
+        </div>
+        
+        <select id="cuisineFilter" onchange="renderFavs()" style="width: 100%; margin-bottom: 15px; background: var(--mimosa); border:none;">
+            <option value="all">🍽️ All Categories</option>
+        </select>
+        <div id="fav-list"></div>
+    </div>
+</div>
+
+<script>
+    const STORAGE_KEY = 'FukuokaTrip2026Data';
+
+    let defaultData = {
+        "title": "FUKUOKA 2026 ✈️",
+        "sub": "Click here to edit trip details... ✏️",
+        "arrivalFlight": "🛫 𝘼𝙍𝙍𝙄𝙑𝘼𝙇 𝙁𝙇𝙄𝙂𝙃𝙏<br><p style='margin: 0px;'>Flight: -- | Departing: -- | Arriving: -- </p><p style='margin: 0px;'>Fukuoka Airport (FUK) 🧸</p>",
+        "departureFlight": "🛬 𝘿𝙀𝙋𝘼𝙍𝙏𝙐𝙍𝙀 𝙁𝙇𝙄𝙂𝙃𝙏<br><p style='margin: 0px;'>Flight: -- | Departing: -- | Arriving: -- </p><p style='margin: 0px;'>Fukuoka Airport (FUK) 🧸</p>",
+        "days": [
+            {"id": "d1", "date": "𝘿𝙖𝙮 1 - Arrival", "acts": [{"t": "Hotel", "d": "Your Hotel Name 🏨", "u": ""}]},
+            {"id": "d2", "date": "𝘿𝙖𝙮 2", "acts": [{"t": "10:00", "d": "First attraction... ✨", "u": ""}]},
+            {"id": "d3", "date": "𝘿𝙖𝙮 3", "acts": []},
+            {"id": "d4", "date": "𝘿𝙖𝙮 4", "acts": []},
+            {"id": "d5", "date": "𝘿𝙖𝙮 5", "acts": []},
+            {"id": "d6", "date": "𝘿𝙖𝙮 6", "acts": []},
+            {"id": "d7", "date": "𝘿𝙖𝙮 7 - Departure", "acts": []}
+        ],
+        "shopping": [],
+        "expenses": [],
+        "favorites": []
+    };
+
+    let tripData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
+
+    function saveAll() {
+        tripData.title = document.getElementById('trip-title').innerText;
+        tripData.sub = document.getElementById('trip-sub').innerText;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tripData));
+    }
+
+    function render() {
+        document.getElementById('trip-title').innerText = tripData.title;
+        document.getElementById('trip-sub').innerText = tripData.sub;
+        document.getElementById('flight-arrival-container').innerHTML = `<div class="flight-card" contenteditable="true" oninput="tripData.arrivalFlight=this.innerHTML;saveAll()">${tripData.arrivalFlight}</div>`;
+        document.getElementById('flight-departure-container').innerHTML = `<div class="flight-card" contenteditable="true" oninput="tripData.departureFlight=this.innerHTML;saveAll()">${tripData.departureFlight}</div>`;
+
+        const schedCont = document.getElementById('schedule-container');
+        schedCont.innerHTML = '';
+        tripData.days.forEach((day, dIdx) => {
+            let html = `<div id="${day.id}" class="day-block">
+                <div class="day-title" contenteditable="true" oninput="tripData.days[${dIdx}].date=this.innerText;saveAll()">${day.date}</div>`;
+            day.acts.forEach((act, aIdx) => {
+                html += `<div class="item-row">
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[${dIdx}].acts[${aIdx}].t=this.innerText;saveAll()">${act.t}</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[${dIdx}].acts[${aIdx}].d=this.innerText;saveAll()">${act.d}</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="${act.u || ''}" oninput="tripData.days[${dIdx}].acts[${aIdx}].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="${act.u || '#'}" target="_blank" class="map-link ${act.u ? '' : 'inactive'}">📍</a>
+                    <button class="btn-del" onclick="removeAct(${dIdx}, ${aIdx})">×</button>
+                </div>`;
+            });
+            html += `<button class="btn-add" onclick="addAct(${dIdx})">+ Add Activity 🍵</button></div>`;
+            schedCont.innerHTML += html;
+        });
+
+        const buyList = document.getElementById('buy-list');
+        buyList.innerHTML = '';
+        tripData.shopping.forEach((item, i) => {
+            buyList.innerHTML += `<div class="list-item">
+                <span contenteditable="true" oninput="tripData.shopping[${i}].n=this.innerText;saveAll()">${item.n}</span>
+                <span><span class="dest-tag" contenteditable="true" oninput="tripData.shopping[${i}].l=this.innerText;saveAll()">${item.l}</span>
+                <button class="btn-del" onclick="removeItem('shopping', ${i})">×</button></span>
+            </div>`;
+        });
+
+        updateCuisineDropdown();
+        renderFavs();
+        filterDays();
+    }
+
+    function toggleStatus(i) {
+        const statuses = ['wish', 'must', 'done'];
+        let current = tripData.favorites[i].status || 'wish';
+        let next = statuses[(statuses.indexOf(current) + 1) % statuses.length];
+        tripData.favorites[i].status = next;
+        saveAll();
+        renderFavs();
+    }
+
+    function renderFavs() {
+        const list = document.getElementById('fav-list');
+        const filter = document.getElementById('cuisineFilter').value;
+        list.innerHTML = '';
+        tripData.favorites.forEach((item, i) => {
+            if(filter !== 'all' && item.c !== filter) return;
+            const s = item.status || 'wish';
+            const label = s === 'must' ? '🔥 Must Go' : s === 'done' ? '✅ Visited' : '💗 Wishlist';
+            list.innerHTML += `<div class="list-item">
+                <div class="rest-info">
+                    <div class="status-badge status-${s}" onclick="toggleStatus(${i})">${label}</div>
+                    <span class="rest-name" contenteditable="true" oninput="tripData.favorites[${i}].n=this.innerText;saveAll()">${item.n}</span>
+                </div>
+                <div class="fav-right-controls">
+                    <span class="cuisine-tag" contenteditable="true" oninput="tripData.favorites[${i}].c=this.innerText;saveAll()">${item.c}</span>
+                    <a href="${item.u || '#'}" target="_blank" class="map-link ${item.u ? '' : 'inactive'}">📍</a>
+                    <button class="btn-del" onclick="removeItem('favorites', ${i})" style="margin-left:15px">×</button>
+                </div>
+            </div>`;
+        });
+    }
+
+    function updateCuisineDropdown() {
+        const dropdown = document.getElementById('cuisineFilter');
+        const cuisines = [...new Set(tripData.favorites.map(f => f.c))].filter(c => c);
+        const currentVal = dropdown.value;
+        dropdown.innerHTML = '<option value="all">🍽️ All Categories</option>';
+        cuisines.forEach(c => dropdown.innerHTML += `<option value="${c}">${c}</option>`);
+        dropdown.value = cuisines.includes(currentVal) ? currentVal : 'all';
+    }
+
+    function switchTab(e, id) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        e.currentTarget.classList.add('active');
+    }
+
+    function addItem(type) {
+        if(type === 'buy') {
+            const n = document.getElementById('buy-name'), l = document.getElementById('buy-dest');
+            if(!n.value) return;
+            tripData.shopping.push({n: n.value, l: l.value || 'General'});
+            n.value = ''; l.value = '';
+        } else {
+            const n = document.getElementById('fav-name'), c = document.getElementById('fav-cuisine'), u = document.getElementById('fav-url');
+            if(!n.value) return;
+            tripData.favorites.push({n: n.value, c: c.value || 'General', u: u.value || '', status: 'wish'});
+            n.value = ''; c.value = ''; u.value = '';
+        }
+        saveAll(); render();
+    }
+
+    function addAct(dIdx) { tripData.days[dIdx].acts.push({t:'00:00', d:'New activity...', u:''}); saveAll(); render(); }
+    function removeAct(dIdx, aIdx) { tripData.days[dIdx].acts.splice(aIdx, 1); saveAll(); render(); }
+    function removeItem(type, i) { tripData[type].splice(i, 1); saveAll(); render(); }
+    function filterDays() {
+        const val = document.getElementById('dayFilter').value;
+        document.querySelectorAll('.day-block').forEach(b => b.style.display = (val==='all' || b.id===val) ? 'block' : 'none');
+        if(document.getElementById('flight-arrival-container'))
+           document.getElementById('flight-arrival-container').style.display = (val==='all' || val==='d1') ? 'block' : 'none';
+        if(document.getElementById('flight-departure-container'))
+           document.getElementById('flight-departure-container').style.display = (val==='all' || val==='d7') ? 'block' : 'none';
+    }
+
+    render();
+</script>
+</body>
+</html>
