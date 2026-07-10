@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fukuoka Trip 2026</title>
     <style>
+        *, *::before, *::after { 
+            box-sizing: border-box; 
+        }
+
         :root {
             --sakura: #fdf2f4; --sky: #eef7fb; --mimosa: #fff9e6;
             --accent-pink: #f2bac9; --accent-blue: #b4d4e2; --text: #5a5a5a;
@@ -47,7 +51,7 @@
 
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
         .input-row { display: flex; gap: 8px; }
-        input, select { padding: 10px; border: 1px solid #eee; border-radius: 10px; flex: 1; outline: none; font-size: 10pt; }
+        input, select { padding: 10px; border: 1px solid #eee; border-radius: 10px; flex: 1; outline: none; font-size: 10pt; width: 100%; /* 確保基本寬度正常 */ }
         .btn-action { background: var(--accent-pink); color: white; border: none; border-radius: 10px; padding: 0 15px; cursor: pointer; font-size: 1.2rem; }
 
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f9f9f9; font-size: 10pt; }
@@ -76,11 +80,11 @@
 <body>
 
 <div class="app-container">
-    <div class="toolbar">🍡 Everything perfectly aligned & synced! 🍡</div>
+    <div class="toolbar">🍜 Everything perfectly aligned & synced for Fukuoka! 🍜</div>
 
     <header>
-        <h1 contenteditable="true" id="trip-title" oninput="saveAll()">TOKYO SPRING 2026 🗼</h1>
-        <div class="subtitle" contenteditable="true" id="trip-sub" oninput="saveAll()">Cherishing the Sakura Season 🌸✨</div>
+        <h1 contenteditable="true" id="trip-title" oninput="saveAll()">FUKUOKA 2026 ✈️</h1>
+        <div class="subtitle" contenteditable="true" id="trip-sub" oninput="saveAll()">Click here to edit trip details... ✏️</div>
     </header>
 
     <div class="nav">
@@ -92,13 +96,13 @@
     <div id="tab-sched" class="tab-content active">
         <select id="dayFilter" onchange="filterDays()" style="margin-bottom: 20px; width: 100%;">
             <option value="all">📍 Show All Days</option>
-            <option value="d1">April 7 - Arrival</option>
-            <option value="d2">April 8</option>
-            <option value="d3">April 9</option>
-            <option value="d4">April 10</option>
-            <option value="d5">April 11</option>
-            <option value="d6">April 12</option>
-            <option value="d7">April 13 - Departure</option>
+            <option value="d1">Day 1 - Arrival</option>
+            <option value="d2">Day 2</option>
+            <option value="d3">Day 3</option>
+            <option value="d4">Day 4</option>
+            <option value="d5">Day 5</option>
+            <option value="d6">Day 6</option>
+            <option value="d7">Day 7 - Departure</option>
         </select>
         <div id="flight-arrival-container"></div>
         <div id="schedule-container"></div>
@@ -108,8 +112,8 @@
     <div id="tab-buy" class="tab-content">
         <div class="input-group">
             <div class="input-row">
-                <input type="text" id="buy-name" placeholder="Item...">
-                <input type="text" id="buy-dest" placeholder="Where?" style="flex:0.7">
+                <input type="text" id="buy-name" placeholder="Item name...">
+                <input type="text" id="buy-dest" placeholder="Where to buy?" style="flex:0.7">
                 <button class="btn-action" onclick="addItem('buy')">+</button>
             </div>
         </div>
@@ -118,29 +122,49 @@
 
     <div id="tab-fav" class="tab-content">
         <div class="input-group" style="background: #fdfdfd; padding: 15px; border-radius: 15px; border: 1px solid #eee;">
-            <input type="text" id="fav-name" placeholder="Restaurant Name" style="margin-bottom: 5px;">
+            <input type="text" id="fav-name" placeholder="Spot / Restaurant Name" style="margin-bottom: 5px; width: 100%;">
             <div class="input-row">
-                <input type="text" id="fav-cuisine" placeholder="Cuisine">
-                <input type="url" id="fav-url" placeholder="Map Link">
+                <input type="text" id="fav-cuisine" placeholder="Category / Cuisine">
+                <input type="url" id="fav-url" placeholder="Google Maps Link">
             </div>
-            <button class="btn-action" style="width: 100%; margin-top: 5px;" onclick="addItem('fav')">Bookmark 🍱</button>
+            <button class="btn-action" style="width: 100%; margin-top: 5px;" onclick="addItem('fav')">Bookmark 📌</button>
         </div>
         
         <select id="cuisineFilter" onchange="renderFavs()" style="width: 100%; margin-bottom: 15px; background: var(--mimosa); border:none;">
-            <option value="all">🍽️ All Cuisines</option>
+            <option value="all">🍽️ All Categories</option>
         </select>
         <div id="fav-list"></div>
     </div>
 </div>
 
 <script>
-    // 這裡已經嵌入了你最新的行程資料
-    let tripData = JSON.parse(localStorage.getItem('tokyoTrip2026Data')) || {"title":"🗻 𝐓𝐎𝐊𝐘𝐎 🗼\n","sub":"(⸝⸝ᵕᴗᵕ⸝⸝) ✨ 𝗔𝗽𝗿𝗶𝗹 𝟳 - 𝗔𝗽𝗿𝗶𝗹 𝟭𝟯\n","arrivalFlight":"🛫 𝘼𝙍𝙍𝙄𝙑𝘼𝙇 𝙁𝙇𝙄𝙂𝙃𝙏<br><p style=\"margin: 0px; font-style: normal; font-variant-caps: normal; font-width: normal; font-size: 13px; line-height: normal; font-family: &quot;Helvetica Neue&quot;; font-size-adjust: none; font-kerning: auto; font-variant-alternates: normal; font-variant-ligatures: normal; font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-position: normal; font-variant-emoji: normal; font-feature-settings: normal; font-optical-sizing: auto; font-variation-settings: normal;\"><span style=\"font-style: normal; font-variant-caps: normal; font-width: normal; font-size: 14px; line-height: normal; font-size-adjust: none; font-kerning: auto; font-variant-alternates: normal; font-variant-ligatures: normal; font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-position: normal; font-variant-emoji: normal; font-feature-settings: normal; font-optical-sizing: auto; font-variation-settings: normal;\"></span>Flight: CX542 | Departing: 16:20 | Arriving: 21:35&nbsp;</p>\n<p style=\"margin: 0px; font-style: normal; font-variant-caps: normal; font-width: normal; font-size: 13px; line-height: normal; font-family: &quot;Helvetica Neue&quot;; font-size-adjust: none; font-kerning: auto; font-variant-alternates: normal; font-variant-ligatures: normal; font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-position: normal; font-variant-emoji: normal; font-feature-settings: normal; font-optical-sizing: auto; font-variation-settings: normal;\">Haneda Terminal 3 <span style=\"font-style: normal; font-variant-caps: normal; font-width: normal; line-height: normal; font-family: &quot;.Apple Color Emoji UI&quot;; font-size-adjust: none; font-kerning: auto; font-variant-alternates: normal; font-variant-ligatures: normal; font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-position: normal; font-variant-emoji: normal; font-feature-settings: normal; font-optical-sizing: auto; font-variation-settings: normal;\">🧸</span></p>","departureFlight":"🛬 𝘿𝙀𝙋𝘼𝙍𝙏𝙐𝙍𝙀 𝙁𝙇𝙄𝙂𝙃𝙏&nbsp;<br><p style=\"margin: 0px; font-width: normal; font-size: 13px; line-height: normal; font-family: &quot;Helvetica Neue&quot;; font-size-adjust: none; font-kerning: auto; font-variant-alternates: normal; font-variant-ligatures: normal; font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-position: normal; font-feature-settings: normal; font-optical-sizing: auto; font-variation-settings: normal;\">Flight: UO647 | Departing: 19:25 | Arriving: 23:20&nbsp;</p><p style=\"margin: 0px; font-width: normal; font-size: 13px; line-height: normal; font-family: &quot;Helvetica Neue&quot;; font-size-adjust: none; font-kerning: auto; font-variant-alternates: normal; font-variant-ligatures: normal; font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-position: normal; font-feature-settings: normal; font-optical-sizing: auto; font-variation-settings: normal;\">Narita Terminal 2&nbsp;<span style=\"font-width: normal; line-height: normal; font-size-adjust: none; font-kerning: auto; font-variant-alternates: normal; font-variant-ligatures: normal; font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-position: normal; font-feature-settings: normal; font-optical-sizing: auto; font-variation-settings: normal;\">🧸</span></p>","days":[{"id":"d1","date":"𝙏𝙪𝙚𝙨𝙙𝙖𝙮, 7 𝘼𝙥𝙧𝙞𝙡\n","acts":[{"t":"𝙃𝙤𝙩𝙚𝙡 ","d":"Mitsui Garden Hotel Gotanda 🏨","u":"https://maps.app.goo.gl/nGQxbpSDdBrHJz436"},{"t":"00:00","d":"New activity... ✨"}]},{"id":"d2","date":"𝙒𝙚𝙙𝙣𝙚𝙨𝙙𝙖𝙮, 8 𝘼𝙥𝙧𝙞𝙡\n","acts":[{"t":"10:00","d":"Shinjuku Gyoen Garden 🌸"},{"t":"00:00","d":"Sushi Ryūjirō  ✨","u":""}]},{"id":"d3","date":"𝙏𝙝𝙪𝙧𝙨𝙙𝙖𝙮, 9 𝘼𝙥𝙧𝙞𝙡\n","acts":[{"t":"00:00","d":"New activity... ✨","u":""}]},{"id":"d4","date":"𝙁𝙧𝙞𝙙𝙖𝙮, 10 𝘼𝙥𝙧𝙞𝙡\n","acts":[]},{"id":"d5","date":"𝙎𝙖𝙩𝙪𝙧𝙙𝙖𝙮, 11 𝘼𝙥𝙧𝙞𝙡\n","acts":[]},{"id":"d6","date":"𝙎𝙪𝙣𝙙𝙖𝙮, 12 𝘼𝙥𝙧𝙞𝙡\n","acts":[]},{"id":"d7","date":"𝙈𝙤𝙣𝙙𝙖𝙮, 13 𝘼𝙥𝙧𝙞𝙡\n","acts":[]}],"shopping":[{"n":"ff","l":"tt"}],"expenses":[],"favorites":[{"n":"ttt","c":"ffff","u":"https://maps.app.goo.gl/agMGSz7wqRiJtQWq9","status":"wish"}]};
+    const STORAGE_KEY = 'FukuokaTrip2026Data';
+
+    let defaultData = {
+        "title": "FUKUOKA 2026 ✈️",
+        "sub": "Click here to edit trip details... ✏️",
+        "arrivalFlight": "🛫 𝘼𝙍𝙍𝙄𝙑𝘼𝙇 𝙁𝙇𝙄𝙂𝙃𝙏<br><p style='margin: 0px;'>Flight: -- | Departing: -- | Arriving: -- </p><p style='margin: 0px;'>Fukuoka Airport (FUK) 🧸</p>",
+        "departureFlight": "🛬 𝘿𝙀𝙋𝘼𝙍𝙏𝙐𝙍𝙀 𝙁𝙇𝙄𝙂𝙃𝙏<br><p style='margin: 0px;'>Flight: -- | Departing: -- | Arriving: -- </p><p style='margin: 0px;'>Fukuoka Airport (FUK) 🧸</p>",
+        "days": [
+            {"id": "d1", "date": "𝘿𝙖𝙮 1 - Arrival", "acts": [{"t": "Hotel", "d": "Your Hotel Name 🏨", "u": ""}]},
+            {"id": "d2", "date": "𝘿𝙖𝙮 2", "acts": [{"t": "10:00", "d": "First attraction... ✨", "u": ""}]},
+            {"id": "d3", "date": "𝘿𝙖𝙮 3", "acts": []},
+            {"id": "d4", "date": "𝘿𝙖𝙮 4", "acts": []},
+            {"id": "d5", "date": "𝘿𝙖𝙮 5", "acts": []},
+            {"id": "d6", "date": "𝘿𝙖𝙮 6", "acts": []},
+            {"id": "d7", "date": "𝘿𝙖𝙮 7 - Departure", "acts": []}
+        ],
+        "shopping": [],
+        "expenses": [],
+        "favorites": []
+    };
+
+    let tripData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
 
     function saveAll() {
         tripData.title = document.getElementById('trip-title').innerText;
         tripData.sub = document.getElementById('trip-sub').innerText;
-        localStorage.setItem('tokyoTrip2026Data', JSON.stringify(tripData));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tripData));
     }
 
     function render() {
@@ -219,7 +243,7 @@
         const dropdown = document.getElementById('cuisineFilter');
         const cuisines = [...new Set(tripData.favorites.map(f => f.c))].filter(c => c);
         const currentVal = dropdown.value;
-        dropdown.innerHTML = '<option value="all">🍽️ All Cuisines</option>';
+        dropdown.innerHTML = '<option value="all">🍽️ All Categories</option>';
         cuisines.forEach(c => dropdown.innerHTML += `<option value="${c}">${c}</option>`);
         dropdown.value = cuisines.includes(currentVal) ? currentVal : 'all';
     }
@@ -240,7 +264,7 @@
         } else {
             const n = document.getElementById('fav-name'), c = document.getElementById('fav-cuisine'), u = document.getElementById('fav-url');
             if(!n.value) return;
-            tripData.favorites.push({n: n.value, c: c.value || 'Food', u: u.value || '', status: 'wish'});
+            tripData.favorites.push({n: n.value, c: c.value || 'General', u: u.value || '', status: 'wish'});
             n.value = ''; c.value = ''; u.value = '';
         }
         saveAll(); render();
