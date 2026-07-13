@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fukuoka Trip 2026</title>
+    <style>
+        *, *::before, *::after { 
+            box-sizing: border-box; 
+        }
+
+        :root {
+            --sakura: #fdf2f4; --sky: #eef7fb; --mimosa: #fff9e6;
+            --accent-pink: #f2bac9; --accent-blue: #b4d4e2; --text: #5a5a5a;
+            --wishlist-yellow: #fffca3;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--sakura); color: var(--text); margin: 0; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 500px; background: white; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.05); }
+        
+        .toolbar { background: var(--mimosa); padding: 8px 10px; font-size: 0.75rem; position: sticky; top: 0; z-index: 1001; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 5px; }
+        .toolbar-title { font-weight: bold; color: #666; }
+        .toolbar-btns { display: flex; gap: 4px; }
+        .btn-export { background: white; border: 1px solid #ddd; padding: 4px 6px; border-radius: 5px; cursor: pointer; font-size: 0.65rem; font-weight: bold; color: #5a5a5a; white-space: nowrap; }
+        .btn-export:active { background: #eee; }
+
+        header { background: linear-gradient(135deg, var(--sakura), var(--sky)); padding: 30px 20px; text-align: center; }
+        h1 { margin: 0; font-size: 1.8rem; color: #888; letter-spacing: 2px; outline: none; white-space: pre-wrap; }
+        .subtitle { font-size: 0.9rem; color: #aaa; margin-top: 5px; font-style: italic; outline: none; white-space: pre-wrap; }
+
+        .nav { display: flex; background: white; border-bottom: 1px solid #eee; position: sticky; top: 37px; z-index: 1000; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-size: 0.7rem; font-weight: bold; color: #ccc; }
+        .tab-btn.active { color: var(--text); border-bottom: 3px solid var(--accent-pink); }
+        
+        .tab-content { padding: 20px; display: none; }
+        .tab-content.active { display: block; }
+
+        .flight-card { background: var(--sky); border-radius: 15px; padding: 15px; margin-bottom: 20px; border-left: 5px solid var(--accent-blue); font-size: 10pt; line-height: 1.4; outline: none; }
+
+        .day-block { margin-bottom: 35px; border-left: 3px solid var(--accent-pink); padding-left: 15px; }
+        .day-title { font-weight: bold; color: #d193a5; font-size: 13pt; margin-bottom: 15px; outline: none; white-space: pre-wrap; }
+        
+        /* 調整 Grid 欄位寬度以容納拖曳手柄 */
+        .item-row { 
+            display: grid; 
+            grid-template-columns: 20px 55px 1fr 30px 25px; 
+            align-items: start; 
+            gap: 10px; 
+            margin-bottom: 12px;
+            background: white;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        /* 拖曳手柄樣式設定 */
+        .drag-handle {
+            cursor: grab;
+            color: #ddd;
+            font-size: 11pt;
+            user-select: none;
+            align-self: start;
+            padding-top: 2px;
+            text-align: center;
+        }
+        .drag-handle:active { cursor: grabbing; color: var(--accent-pink); }
+
+        .time-box, .desc-box { font-size: 10pt; line-height: 1.4; outline: none; margin: 0; padding: 0; }
+        .time-box { color: #999; font-weight: bold; }
+        .link-input { font-size: 8pt; color: #aaa; border: none; border-bottom: 1px dashed #ddd; width: 100%; margin-top: 4px; outline: none; }
+        
+        .btn-del { color: #ffcccc; border: none; background: none; cursor: pointer; font-size: 14pt; line-height: 1.1; align-self: start; padding: 0; }
+        .btn-add { width: 100%; padding: 8px; border: 1px dashed #ddd; background: none; color: #bbb; cursor: pointer; border-radius: 8px; margin-top: 5px; font-size: 0.8rem; }
+
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .input-row { display: flex; gap: 8px; }
+        input, select { padding: 10px; border: 1px solid #eee; border-radius: 10px; flex: 1; outline: none; font-size: 10pt; width: 100%; }
+        
+        .btn-action { 
+            background: var(--accent-pink); 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            padding: 10px 15px; 
+            cursor: pointer; 
+            font-size: 10pt; 
+            font-weight: bold; 
+        }
+
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f9f9f9; font-size: 10pt; }
+        .dest-tag { font-size: 8pt; background: var(--mimosa); padding: 3px 8px; border-radius: 6px; color: #9e8d5a; margin-left: 10px; font-weight: bold; outline: none; }
+
+        .status-badge { 
+            font-size: 8pt; 
+            padding: 4px 10px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold;
+            margin-bottom: 6px;
+            display: inline-block;
+        }
+        .status-wish { background: var(--wishlist-yellow); color: #7a7000; }
+        .status-must { background: #ffe3e3; color: #ff6b6b; }
+        .status-done { background: #e3f9e5; color: #51cf66; }
+
+        .rest-info { display: flex; flex-direction: column; align-items: flex-start; }
+        .rest-name { font-size: 10pt; font-weight: bold; display: block; margin-bottom: 2px; outline: none; }
+        .cuisine-tag { font-size: 8pt; background: var(--sky); padding: 3px 8px; border-radius: 6px; color: #5a879e; font-weight: bold; white-space: nowrap; margin-right: 10px; outline: none; }
+        .fav-right-controls { display: flex; align-items: center; }
+        .map-link { font-size: 1.3rem; text-decoration: none; transition: 0.2s; }
+        .map-link.inactive { opacity: 0.1; pointer-events: none; filter: grayscale(1); }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="toolbar">
+        <span class="toolbar-title">🍜 Fukuoka Trip</span>
+        <div class="toolbar-btns">
+            <button class="btn-export" onclick="exportDataCode()">📋 Copy Data</button>
+            <button class="btn-export" style="background: var(--sky);" onclick="downloadUpdatedHTML()">📥 Download HTML</button>
+        </div>
+    </div>
+
+    <header>
+        <h1 contenteditable="true" id="trip-title" oninput="saveAll()">𓏲 ๋࣭ ࣪ ˖ ꜰᴜᴋᴜᴏᴋᴀ 𝟐𝟎𝟐𝟔 🎐</h1>
+        <div class="subtitle" contenteditable="true" id="trip-sub" oninput="saveAll()">Click here to edit trip details... ✏️</div>
+    </header>
+
+    <div class="nav">
+        <button class="tab-btn active" onclick="switchTab(event, 'tab-sched')">🗓️ SCHEDULE</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-buy')">🛍️ SHOPPING</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-fav')">⭐ FAVORITES</button>
+    </div>
+
+    <div id="tab-sched" class="tab-content active">
+        <select id="dayFilter" onchange="filterDays()" style="margin-bottom: 20px; width: 100%;">
+            <option value="all">📍 Show All Days</option>
+            <option value="d1">Day 1 - Arrival</option>
+            <option value="d2">Day 2</option>
+            <option value="d3">Day 3</option>
+            <option value="d4">Day 4</option>
+            <option value="d5">Day 5 - Departure</option>
+        </select>
+        <div id="flight-arrival-container" style="display: block;"><div class="flight-card" contenteditable="true" oninput="tripData.arrivalFlight=this.innerHTML;saveAll()">🛫 𝘼𝙍𝙍𝙄𝙑𝘼𝙇 𝙁𝙇𝙄𝙂𝙃𝙏<br><p style="margin: 0px;">Flight: UO694 | Departing: 15:15 | Arriving: 19:40</p><p style="margin: 0px;">Fukuoka Airport (FUK) 🧸</p></div></div>
+        <div id="schedule-container"><div id="d1" class="day-block" style="display: block;">
+                <div class="day-title" contenteditable="true" oninput="tripData.days[0].date=this.innerText;saveAll()">𝘿𝙖𝙮 1 - Arrival</div>
+                <!-- 整個行程容器皆可作為拖曳投放目標 -->
+                <div class="acts-list" ondragover="dragOver(event)" ondrop="dropToDay(event, 0)" style="min-height: 20px; margin-bottom: 10px;"><div class="item-row" draggable="false" ondragstart="dragStart(event, 0, 0)" ondragover="dragOver(event)" ondrop="dropToItem(event, 0, 0)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[0].acts[0].t=this.innerText;saveAll()">Hotel</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[0].acts[0].d=this.innerText;saveAll()">Hotel Il Palazzo 🏨</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="https://maps.app.goo.gl/Cg8psyRKogYT8Ya58?g_st=ic" oninput="tripData.days[0].acts[0].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="https://maps.app.goo.gl/Cg8psyRKogYT8Ya58?g_st=ic" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeAct(0, 0)">×</button>
+                </div><div class="item-row" draggable="false" ondragstart="dragStart(event, 0, 1)" ondragover="dragOver(event)" ondrop="dropToItem(event, 0, 1)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[0].acts[1].t=this.innerText;saveAll()">22:00</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[0].acts[1].d=this.innerText;saveAll()">✔️三原豆腐店&nbsp;🍲‧₊˚ ⋅&nbsp;🍥</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="https://maps.app.goo.gl/fpugmbo5Ev4nUXcB8" oninput="tripData.days[0].acts[1].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="https://maps.app.goo.gl/fpugmbo5Ev4nUXcB8" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeAct(0, 1)">×</button>
+                </div></div><button class="btn-add" onclick="addAct(0)">+ Add Activity 🍵</button></div><div id="d2" class="day-block" style="display: block;">
+                <div class="day-title" contenteditable="true" oninput="tripData.days[1].date=this.innerText;saveAll()">𝘿𝙖𝙮 2</div>
+                <!-- 整個行程容器皆可作為拖曳投放目標 -->
+                <div class="acts-list" ondragover="dragOver(event)" ondrop="dropToDay(event, 1)" style="min-height: 20px; margin-bottom: 10px;"><div class="item-row" draggable="false" ondragstart="dragStart(event, 1, 0)" ondragover="dragOver(event)" ondrop="dropToItem(event, 1, 0)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[1].acts[0].t=this.innerText;saveAll()">09:30</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[1].acts[0].d=this.innerText;saveAll()">Fuk Coffee&nbsp;☕ᝰ.ᐟ🍮 ˚₊‧</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="https://maps.app.goo.gl/knahqJGpYChuyDdn9" oninput="tripData.days[1].acts[0].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="https://maps.app.goo.gl/knahqJGpYChuyDdn9" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeAct(1, 0)">×</button>
+                </div><div class="item-row" draggable="false" ondragstart="dragStart(event, 1, 1)" ondragover="dragOver(event)" ondrop="dropToItem(event, 1, 1)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[1].acts[1].t=this.innerText;saveAll()">10:00</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[1].acts[1].d=this.innerText;saveAll()">The Full Full Hakata ✨🥖</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="https://maps.app.goo.gl/iE36xXiN1EmyDtYB8" oninput="tripData.days[1].acts[1].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="https://maps.app.goo.gl/iE36xXiN1EmyDtYB8" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeAct(1, 1)">×</button>
+                </div><div class="item-row" draggable="false" ondragstart="dragStart(event, 1, 2)" ondragover="dragOver(event)" ondrop="dropToItem(event, 1, 2)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[1].acts[2].t=this.innerText;saveAll()">11:00</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[1].acts[2].d=this.innerText;saveAll()">天神 shopping</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="" oninput="tripData.days[1].acts[2].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="#" target="_blank" class="map-link inactive">📍</a>
+                    <button class="btn-del" onclick="removeAct(1, 2)">×</button>
+                </div><div class="item-row" draggable="false" ondragstart="dragStart(event, 1, 3)" ondragover="dragOver(event)" ondrop="dropToItem(event, 1, 3)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[1].acts[3].t=this.innerText;saveAll()">17:00</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[1].acts[3].d=this.innerText;saveAll()">✔️すみ劇場 むさし坐&nbsp;⋅˚₊‧ ୨🦑🦞🥢୧ ‧₊˚ ⋅</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="https://maps.app.goo.gl/Mv9z4AZEPuvW8b2b6" oninput="tripData.days[1].acts[3].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="https://maps.app.goo.gl/Mv9z4AZEPuvW8b2b6" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeAct(1, 3)">×</button>
+                </div><div class="item-row" draggable="false" ondragstart="dragStart(event, 1, 4)" ondragover="dragOver(event)" ondrop="dropToItem(event, 1, 4)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[1].acts[4].t=this.innerText;saveAll()">23:00</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[1].acts[4].d=this.innerText;saveAll()">博多屋台からす天狗 ˙✧˖°&nbsp;🍢&nbsp;⋆｡˚꩜</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="https://maps.app.goo.gl/HHdgD2LRMUKLXwWQ7" oninput="tripData.days[1].acts[4].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="https://maps.app.goo.gl/HHdgD2LRMUKLXwWQ7" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeAct(1, 4)">×</button>
+                </div></div><button class="btn-add" onclick="addAct(1)">+ Add Activity 🍵</button></div><div id="d3" class="day-block" style="display: block;">
+                <div class="day-title" contenteditable="true" oninput="tripData.days[2].date=this.innerText;saveAll()">𝘿𝙖𝙮 3</div>
+                <!-- 整個行程容器皆可作為拖曳投放目標 -->
+                <div class="acts-list" ondragover="dragOver(event)" ondrop="dropToDay(event, 2)" style="min-height: 20px; margin-bottom: 10px;"><div class="item-row" draggable="false" ondragstart="dragStart(event, 2, 0)" ondragover="dragOver(event)" ondrop="dropToItem(event, 2, 0)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[2].acts[0].t=this.innerText;saveAll()">11:00</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[2].acts[0].d=this.innerText;saveAll()">Fishman 博多炉端 魚男&nbsp;𓆝 ⋆｡𖦹°‧🫧</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="https://maps.app.goo.gl/d2HvKusrQ6N561TLA" oninput="tripData.days[2].acts[0].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="https://maps.app.goo.gl/d2HvKusrQ6N561TLA" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeAct(2, 0)">×</button>
+                </div><div class="item-row" draggable="false" ondragstart="dragStart(event, 2, 1)" ondragover="dragOver(event)" ondrop="dropToItem(event, 2, 1)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[2].acts[1].t=this.innerText;saveAll()">15:00</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[2].acts[1].d=this.innerText;saveAll()">REC COFFEE 天神南店 ☕𐙚 ˚🍰 ⋆｡˚ ᡣ𐭩</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="https://maps.app.goo.gl/URdcGKMYm8DgTWvV7" oninput="tripData.days[2].acts[1].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="https://maps.app.goo.gl/URdcGKMYm8DgTWvV7" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeAct(2, 1)">×</button>
+                </div><div class="item-row" draggable="false" ondragstart="dragStart(event, 2, 2)" ondragover="dragOver(event)" ondrop="dropToItem(event, 2, 2)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[2].acts[2].t=this.innerText;saveAll()">16:30</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[2].acts[2].d=this.innerText;saveAll()">dacō donut dessert&nbsp;‧₊˚🍞꒷꒦🍰˚꒱🥯</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="https://maps.app.goo.gl/1Yf4HY3T31y1eD6n8" oninput="tripData.days[2].acts[2].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="https://maps.app.goo.gl/1Yf4HY3T31y1eD6n8" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeAct(2, 2)">×</button>
+                </div><div class="item-row" draggable="false" ondragstart="dragStart(event, 2, 3)" ondragover="dragOver(event)" ondrop="dropToItem(event, 2, 3)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[2].acts[3].t=this.innerText;saveAll()">21:00</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[2].acts[3].d=this.innerText;saveAll()">✔️焼肉すどう 春吉 ♨️🔥🥩♡ ༘*.ﾟ</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="https://maps.app.goo.gl/Sv2bt4nFtcGmxkfGA" oninput="tripData.days[2].acts[3].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="https://maps.app.goo.gl/Sv2bt4nFtcGmxkfGA" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeAct(2, 3)">×</button>
+                </div></div><button class="btn-add" onclick="addAct(2)">+ Add Activity 🍵</button></div><div id="d4" class="day-block" style="display: block;">
+                <div class="day-title" contenteditable="true" oninput="tripData.days[3].date=this.innerText;saveAll()">𝘿𝙖𝙮 4</div>
+                <!-- 整個行程容器皆可作為拖曳投放目標 -->
+                <div class="acts-list" ondragover="dragOver(event)" ondrop="dropToDay(event, 3)" style="min-height: 20px; margin-bottom: 10px;"><div class="item-row" draggable="false" ondragstart="dragStart(event, 3, 0)" ondragover="dragOver(event)" ondrop="dropToItem(event, 3, 0)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[3].acts[0].t=this.innerText;saveAll()">09:00</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[3].acts[0].d=this.innerText;saveAll()">&amp;LOCALS Ohori Park Shop&nbsp;𐙚 ˚🍳 ⋆｡˚ 🥪𐭩</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="https://maps.app.goo.gl/DeybVBfYjBd9GZTy8" oninput="tripData.days[3].acts[0].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="https://maps.app.goo.gl/DeybVBfYjBd9GZTy8" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeAct(3, 0)">×</button>
+                </div><div class="item-row" draggable="false" ondragstart="dragStart(event, 3, 1)" ondragover="dragOver(event)" ondrop="dropToItem(event, 3, 1)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[3].acts[1].t=this.innerText;saveAll()">10:00</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[3].acts[1].d=this.innerText;saveAll()">大濠公園&nbsp;˚˖𓍢ִִ໋🌼🌳˚˖𓍢ִ🌿˚.</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="https://maps.app.goo.gl/53mApLU7aLoPE4SUA" oninput="tripData.days[3].acts[1].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="https://maps.app.goo.gl/53mApLU7aLoPE4SUA" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeAct(3, 1)">×</button>
+                </div><div class="item-row" draggable="false" ondragstart="dragStart(event, 3, 2)" ondragover="dragOver(event)" ondrop="dropToItem(event, 3, 2)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[3].acts[2].t=this.innerText;saveAll()">Hotel
+</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[3].acts[2].d=this.innerText;saveAll()">Rakuten STAY VILLA 由布院温泉&nbsp;♨&nbsp;🧖🏻‍♀️</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="https://maps.app.goo.gl/whVooQFUzNBQGXsx8" oninput="tripData.days[3].acts[2].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="https://maps.app.goo.gl/whVooQFUzNBQGXsx8" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeAct(3, 2)">×</button>
+                </div></div><button class="btn-add" onclick="addAct(3)">+ Add Activity 🍵</button></div><div id="d5" class="day-block" style="display: block;">
+                <div class="day-title" contenteditable="true" oninput="tripData.days[4].date=this.innerText;saveAll()">𝘿𝙖𝙮 5 - Departure</div>
+                <!-- 整個行程容器皆可作為拖曳投放目標 -->
+                <div class="acts-list" ondragover="dragOver(event)" ondrop="dropToDay(event, 4)" style="min-height: 20px; margin-bottom: 10px;"><div class="item-row" draggable="false" ondragstart="dragStart(event, 4, 0)" ondragover="dragOver(event)" ondrop="dropToItem(event, 4, 0)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[4].acts[0].t=this.innerText;saveAll()">00:00</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[4].acts[0].d=this.innerText;saveAll()">動物園</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="" oninput="tripData.days[4].acts[0].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="#" target="_blank" class="map-link inactive">📍</a>
+                    <button class="btn-del" onclick="removeAct(4, 0)">×</button>
+                </div><div class="item-row" draggable="false" ondragstart="dragStart(event, 4, 1)" ondragover="dragOver(event)" ondrop="dropToItem(event, 4, 1)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[4].acts[1].t=this.innerText;saveAll()">00:00</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[4].acts[1].d=this.innerText;saveAll()">Pâtisserie au fil du jour</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="" oninput="tripData.days[4].acts[1].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="#" target="_blank" class="map-link inactive">📍</a>
+                    <button class="btn-del" onclick="removeAct(4, 1)">×</button>
+                </div><div class="item-row" draggable="false" ondragstart="dragStart(event, 4, 2)" ondragover="dragOver(event)" ondrop="dropToItem(event, 4, 2)">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[4].acts[2].t=this.innerText;saveAll()">00:00</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[4].acts[2].d=this.innerText;saveAll()">udon</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="" oninput="tripData.days[4].acts[2].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="#" target="_blank" class="map-link inactive">📍</a>
+                    <button class="btn-del" onclick="removeAct(4, 2)">×</button>
+                </div></div><button class="btn-add" onclick="addAct(4)">+ Add Activity 🍵</button></div></div>
+        <div id="flight-departure-container" style="display: block;"><div class="flight-card" contenteditable="true" oninput="tripData.departureFlight=this.innerHTML;saveAll()">🛬 𝘿𝙀𝙋𝘼𝙍𝙏𝙐𝙍𝙀 𝙁𝙇𝙄𝙂𝙃𝙏<br><p style="margin: 0px;">Flight: -- | Departing: -- | Arriving: -- </p><p style="margin: 0px;">Fukuoka Airport (FUK) 🧸</p></div></div>
+    </div>
+
+    <div id="tab-buy" class="tab-content">
+        <div class="input-group">
+            <div class="input-row">
+                <input type="text" id="buy-name" placeholder="Item name...">
+                <input type="text" id="buy-dest" placeholder="Where to buy?" style="flex:0.7">
+                <button class="btn-action" onclick="addItem('buy')">+</button>
+            </div>
+        </div>
+        <div id="buy-list"></div>
+    </div>
+
+    <div id="tab-fav" class="tab-content">
+        <div class="input-group" style="background: #fdfdfd; padding: 15px; border-radius: 15px; border: 1px solid #eee;">
+            <input type="text" id="fav-name" placeholder="Spot / Restaurant Name" style="margin-bottom: 5px; width: 100%;">
+            <div class="input-row">
+                <input type="text" id="fav-cuisine" placeholder="Category / Cuisine">
+                <input type="url" id="fav-url" placeholder="Google Maps Link">
+            </div>
+            <button class="btn-action" style="width: 100%; margin-top: 5px;" onclick="addItem('fav')">Bookmark 📌</button>
+        </div>
+        
+        <select id="cuisineFilter" onchange="renderFavs()" style="width: 100%; margin-bottom: 15px; background: var(--mimosa); border:none;"><option value="all">🍽️ All Categories</option><option value="牛腸鍋">牛腸鍋</option><option value="Coffee">Coffee</option><option value="居酒屋">居酒屋</option><option value="居酒屋早餐">居酒屋早餐</option><option value="Pastry">Pastry</option><option value="屋台">屋台</option><option value="Udon">Udon</option><option value="燒肉">燒肉</option><option value="鰻魚飯">鰻魚飯</option><option value="牛丼">牛丼</option><option value="魚生飯">魚生飯</option><option value="沾麵">沾麵</option><option value="由布院 -&nbsp;牛丼">由布院 -&nbsp;牛丼</option><option value="由布院 -&nbsp;Pastry">由布院 -&nbsp;Pastry</option><option value="由布院 - Curry Udon">由布院 - Curry Udon</option></select>
+        <div id="fav-list"><div class="list-item">
+                <div class="rest-info">
+                    <div class="status-badge status-wish" onclick="toggleStatus(10)">💗 Wishlist</div>
+                    <span class="rest-name" contenteditable="true" oninput="tripData.favorites[10].n=this.innerText;saveAll()">炭火焼肉バル AGITO HIRAO</span>
+                </div>
+                <div class="fav-right-controls">
+                    <span class="cuisine-tag" contenteditable="true" oninput="tripData.favorites[10].c=this.innerText;saveAll()">燒肉</span>
+                    <a href="https://maps.app.goo.gl/bnomY3NK8oSFzorc7" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeItem('favorites', 10)" style="margin-left:15px">×</button>
+                </div>
+            </div><div class="list-item">
+                <div class="rest-info">
+                    <div class="status-badge status-wish" onclick="toggleStatus(12)">💗 Wishlist</div>
+                    <span class="rest-name" contenteditable="true" oninput="tripData.favorites[12].n=this.innerText;saveAll()">にく屋 肉いち</span>
+                </div>
+                <div class="fav-right-controls">
+                    <span class="cuisine-tag" contenteditable="true" oninput="tripData.favorites[12].c=this.innerText;saveAll()">燒肉</span>
+                    <a href="https://maps.app.goo.gl/7xWpYgQFXNMbGFiL6" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeItem('favorites', 12)" style="margin-left:15px">×</button>
+                </div>
+            </div><div class="list-item">
+                <div class="rest-info">
+                    <div class="status-badge status-wish" onclick="toggleStatus(14)">💗 Wishlist</div>
+                    <span class="rest-name" contenteditable="true" oninput="tripData.favorites[14].n=this.innerText;saveAll()">創業37年 特選黒毛和牛 個室焼肉 にく田 天神/赤坂 NIKUDEN</span>
+                </div>
+                <div class="fav-right-controls">
+                    <span class="cuisine-tag" contenteditable="true" oninput="tripData.favorites[14].c=this.innerText;saveAll()">燒肉</span>
+                    <a href="https://maps.app.goo.gl/6NHZNP4NFkQ8qF8b9" target="_blank" class="map-link ">📍</a>
+                    <button class="btn-del" onclick="removeItem('favorites', 14)" style="margin-left:15px">×</button>
+                </div>
+            </div></div>
+    </div>
+</div>
+
+<script>
+    const STORAGE_KEY = 'FukuokaTrip2026Data';
+
+    //==START_DATA==
+    let defaultData = {
+    "title": "𓏲 ๋࣭ ࣪ ˖ ꜰᴜᴋᴜᴏᴋᴀ 𝟐𝟎𝟐𝟔 🎐",
+    "sub": "Click here to edit trip details... ✏️",
+    "arrivalFlight": "🛫 𝘼𝙍𝙍𝙄𝙑𝘼𝙇 𝙁𝙇𝙄𝙂𝙃𝙏<br><p style=\"margin: 0px;\">Flight: UO694 | Departing: 15:15 | Arriving: 19:40</p><p style=\"margin: 0px;\">Fukuoka Airport (FUK) 🧸</p>",
+    "departureFlight": "🛬 𝘿𝙀𝙋𝘼𝙍𝙏𝙐𝙍𝙀 𝙁𝙇𝙄𝙂𝙃𝙏<br><p style='margin: 0px;'>Flight: -- | Departing: -- | Arriving: -- </p><p style='margin: 0px;'>Fukuoka Airport (FUK) 🧸</p>",
+    "days": [
+        {
+            "id": "d1",
+            "date": "𝘿𝙖𝙮 1 - Arrival",
+            "acts": [
+                {
+                    "t": "Hotel",
+                    "d": "Hotel Il Palazzo 🏨",
+                    "u": "https://maps.app.goo.gl/Cg8psyRKogYT8Ya58?g_st=ic"
+                },
+                {
+                    "t": "22:00",
+                    "d": "✔️三原豆腐店 🍲‧₊˚ ⋅ 🍥",
+                    "u": "https://maps.app.goo.gl/fpugmbo5Ev4nUXcB8"
+                }
+            ]
+        },
+        {
+            "id": "d2",
+            "date": "𝘿𝙖𝙮 2",
+            "acts": [
+                {
+                    "t": "09:30",
+                    "d": "Fuk Coffee ☕ᝰ.ᐟ🍮 ˚₊‧",
+                    "u": "https://maps.app.goo.gl/knahqJGpYChuyDdn9"
+                },
+                {
+                    "t": "10:00",
+                    "d": "The Full Full Hakata ✨🥖",
+                    "u": "https://maps.app.goo.gl/iE36xXiN1EmyDtYB8"
+                },
+                {
+                    "t": "11:00",
+                    "d": "天神 shopping",
+                    "u": ""
+                },
+                {
+                    "t": "17:00",
+                    "d": "✔️すみ劇場 むさし坐 ⋅˚₊‧ ୨🦑🦞🥢୧ ‧₊˚ ⋅",
+                    "u": "https://maps.app.goo.gl/Mv9z4AZEPuvW8b2b6"
+                },
+                {
+                    "t": "23:00",
+                    "d": "博多屋台からす天狗 ˙✧˖° 🍢 ⋆｡˚꩜",
+                    "u": "https://maps.app.goo.gl/HHdgD2LRMUKLXwWQ7"
+                }
+            ]
+        },
+        {
+            "id": "d3",
+            "date": "𝘿𝙖𝙮 3",
+            "acts": [
+                {
+                    "t": "11:00",
+                    "d": "Fishman 博多炉端 魚男 𓆝 ⋆｡𖦹°‧🫧",
+                    "u": "https://maps.app.goo.gl/d2HvKusrQ6N561TLA"
+                },
+                {
+                    "t": "15:00",
+                    "d": "REC COFFEE 天神南店 ☕𐙚 ˚🍰 ⋆｡˚ ᡣ𐭩",
+                    "u": "https://maps.app.goo.gl/URdcGKMYm8DgTWvV7"
+                },
+                {
+                    "t": "16:30",
+                    "d": "dacō donut dessert ‧₊˚🍞꒷꒦🍰˚꒱🥯",
+                    "u": "https://maps.app.goo.gl/1Yf4HY3T31y1eD6n8"
+                },
+                {
+                    "t": "21:00",
+                    "d": "✔️焼肉すどう 春吉 ♨️🔥🥩♡ ༘*.ﾟ",
+                    "u": "https://maps.app.goo.gl/Sv2bt4nFtcGmxkfGA"
+                }
+            ]
+        },
+        {
+            "id": "d4",
+            "date": "𝘿𝙖𝙮 4",
+            "acts": [
+                {
+                    "t": "09:00",
+                    "d": "&LOCALS Ohori Park Shop 𐙚 ˚🍳 ⋆｡˚ 🥪𐭩",
+                    "u": "https://maps.app.goo.gl/DeybVBfYjBd9GZTy8"
+                },
+                {
+                    "t": "10:00",
+                    "d": "大濠公園 ˚˖𓍢ִִ໋🌼🌳˚˖𓍢ִ🌿˚.",
+                    "u": "https://maps.app.goo.gl/53mApLU7aLoPE4SUA"
+                },
+                {
+                    "t": "Hotel\n",
+                    "d": "Rakuten STAY VILLA 由布院温泉 ♨ 🧖🏻‍♀️",
+                    "u": "https://maps.app.goo.gl/whVooQFUzNBQGXsx8"
+                }
+            ]
+        },
+        {
+            "id": "d5",
+            "date": "𝘿𝙖𝙮 5 - Departure",
+            "acts": [
+                {
+                    "t": "00:00",
+                    "d": "動物園",
+                    "u": ""
+                },
+                {
+                    "t": "00:00",
+                    "d": "Pâtisserie au fil du jour",
+                    "u": ""
+                },
+                {
+                    "t": "00:00",
+                    "d": "udon",
+                    "u": ""
+                }
+            ]
+        }
+    ],
+    "shopping": [],
+    "expenses": [],
+    "favorites": [
+        {
+            "n": "博多もつ鍋前田屋 総本店",
+            "c": "牛腸鍋",
+            "u": "https://maps.app.goo.gl/4WepgC75ZtEE5Ecs7",
+            "status": "wish"
+        },
+        {
+            "n": "Fuk Coffee",
+            "c": "Coffee",
+            "u": "https://maps.app.goo.gl/bc1GTwy1QxrA9w2a9?g_st=ic",
+            "status": "must"
+        },
+        {
+            "n": "COFFEE COUNTY Fukuoka",
+            "c": "Coffee",
+            "u": "https://maps.app.goo.gl/9yRnjEbQPs1nMFjo6?g_st=ic",
+            "status": "wish"
+        },
+        {
+            "n": "Hakata Robata Fishman 博多炉端 魚男 （フィッシュマン）",
+            "c": "居酒屋",
+            "u": "https://maps.app.goo.gl/oEYvgLuNf7WzSsm29?g_st=ic",
+            "status": "wish"
+        },
+        {
+            "n": "爐端之itookashi",
+            "c": "居酒屋早餐",
+            "u": "https://maps.app.goo.gl/n4gHJTdKur1zvJWEA",
+            "status": "wish"
+        },
+        {
+            "n": "The Full Full Hakata",
+            "c": "Pastry",
+            "u": "https://maps.app.goo.gl/yAAEt4yGcAvB9fs86",
+            "status": "wish"
+        },
+        {
+            "n": "Pâtisserie au fil du jour",
+            "c": "Pastry",
+            "u": "https://maps.app.goo.gl/4ry2A4M4JsWBLk9o6",
+            "status": "wish"
+        },
+        {
+            "n": "博多屋台からす天狗",
+            "c": "屋台",
+            "u": "https://maps.app.goo.gl/D7ATzBaYUvjW8qv7A",
+            "status": "wish"
+        },
+        {
+            "n": "Sanuki Udon Shinari 志成",
+            "c": "Udon",
+            "u": "https://maps.app.goo.gl/cZ2PeYSpXtAHBL6P9",
+            "status": "wish"
+        },
+        {
+            "n": "うどん 和助 本店",
+            "c": "Udon",
+            "u": "https://maps.app.goo.gl/a8YEhUHo3ybYqyDZ7",
+            "status": "wish"
+        },
+        {
+            "n": "炭火焼肉バル AGITO HIRAO",
+            "c": "燒肉",
+            "u": "https://maps.app.goo.gl/bnomY3NK8oSFzorc7",
+            "status": "wish"
+        },
+        {
+            "n": "鰻のエイト 博多総本店",
+            "c": "鰻魚飯",
+            "u": "https://maps.app.goo.gl/Dj4DVjhSJam5jKEj9",
+            "status": "wish"
+        },
+        {
+            "n": "にく屋 肉いち",
+            "c": "燒肉",
+            "u": "https://maps.app.goo.gl/7xWpYgQFXNMbGFiL6",
+            "status": "wish"
+        },
+        {
+            "n": "黒毛和牛 博多牛まぶし 武蔵",
+            "c": "牛丼",
+            "u": "https://maps.app.goo.gl/ZHkNEo4rNhgQf13h7",
+            "status": "wish"
+        },
+        {
+            "n": "創業37年 特選黒毛和牛 個室焼肉 にく田 天神/赤坂 NIKUDEN",
+            "c": "燒肉",
+            "u": "https://maps.app.goo.gl/6NHZNP4NFkQ8qF8b9",
+            "status": "wish"
+        },
+        {
+            "n": "マグロとご飯 黒田飯",
+            "c": "魚生飯",
+            "u": "https://maps.app.goo.gl/G8pB7PrHxDSXbSvi6",
+            "status": "wish"
+        },
+        {
+            "n": "Uochu",
+            "c": "魚生飯",
+            "u": "https://maps.app.goo.gl/zEkaxn6Na2WTeKsA6",
+            "status": "wish"
+        },
+        {
+            "n": "麺や兼虎 天神本店",
+            "c": "沾麵",
+            "u": "https://maps.app.goo.gl/GNveNEjdqkR12WPLA",
+            "status": "wish"
+        },
+        {
+            "n": "食堂 光",
+            "c": "魚生飯",
+            "u": "https://maps.app.goo.gl/jXj8Ww9fM8PHoz4V8",
+            "status": "wish"
+        },
+        {
+            "n": "山家料理 湯の岳庵（食牛飯/鰻魚）",
+            "c": "由布院 - 牛丼",
+            "u": "https://maps.app.goo.gl/8Ys6oZq9ev6y6wEb7",
+            "status": "must"
+        },
+        {
+            "n": "鞠智銅鑼燒",
+            "c": "由布院 - Pastry",
+            "u": "https://maps.app.goo.gl/z91DhYivgozWkeTf8",
+            "status": "wish"
+        },
+        {
+            "n": "今泉堂 imaizumido",
+            "c": "由布院 - Pastry",
+            "u": "https://maps.app.goo.gl/sNYZR2SqFS7kVWoi9",
+            "status": "wish"
+        },
+        {
+            "n": "Milch (pudding)",
+            "c": "由布院 - Pastry",
+            "u": "https://maps.app.goo.gl/23hVbEtALwcFtEcU8",
+            "status": "wish"
+        },
+        {
+            "n": "山椒カレーうどん 菊すけ",
+            "c": "由布院 - Curry Udon",
+            "u": "https://maps.app.goo.gl/2YQ65pcyBdsYGAif7",
+            "status": "wish"
+        }
+    ]
+};
+    //==END_DATA==
+
+    let tripData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData;
+
+    if (tripData.days.length > 5) {
+        tripData.days = tripData.days.slice(0, 5);
+        tripData.days[4].date = "𝘿𝙖𝙮 5 - Departure";
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tripData));
+    }
+
+    // 拖曳狀態全域變數
+    let draggedDayIdx = null;
+    let draggedActIdx = null;
+
+    function saveAll() {
+        tripData.title = document.getElementById('trip-title').innerText;
+        tripData.sub = document.getElementById('trip-sub').innerText;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tripData));
+    }
+
+    function exportDataCode() {
+        const formattedCode = JSON.stringify(tripData, null, 4);
+        navigator.clipboard.writeText(formattedCode).then(() => {
+            alert("📋 Data code copied!");
+        }).catch(err => {
+            console.log(formattedCode);
+        });
+    }
+
+    function downloadUpdatedHTML() {
+        saveAll(); 
+        
+        const scriptTag = document.querySelector('script');
+        const originalScript = scriptTag.innerHTML;
+        
+        const newDataStr = `\n    let defaultData = ${JSON.stringify(tripData, null, 4)};\n    `;
+        const regex = /\/\/==START_DATA==[\s\S]*?\/\/==END_DATA==/;
+        const updatedScript = originalScript.replace(regex, `//==START_DATA==${newDataStr}//==END_DATA==`);
+        
+        scriptTag.innerHTML = updatedScript;
+        const finalHTML = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+        
+        scriptTag.innerHTML = originalScript;
+        
+        const blob = new Blob([finalHTML], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'index.html'; 
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // 拖曳核心邏輯處理函數
+    function dragStart(e, dIdx, aIdx) {
+        draggedDayIdx = dIdx;
+        draggedActIdx = aIdx;
+        e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function dragOver(e) {
+        e.preventDefault(); // 必須阻擋預設行為才能觸發 drop
+    }
+
+    function dropToItem(e, targetDIdx, targetAIdx) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (draggedDayIdx === null || draggedActIdx === null) return;
+        
+        const movedAct = tripData.days[draggedDayIdx].acts[draggedActIdx];
+        tripData.days[draggedDayIdx].acts.splice(draggedActIdx, 1);
+        tripData.days[targetDIdx].acts.splice(targetAIdx, 0, movedAct);
+        
+        draggedDayIdx = null; draggedActIdx = null;
+        saveAll(); render();
+    }
+
+    function dropToDay(e, targetDIdx) {
+        e.preventDefault();
+        if (draggedDayIdx === null || draggedActIdx === null) return;
+        
+        const movedAct = tripData.days[draggedDayIdx].acts[draggedActIdx];
+        tripData.days[draggedDayIdx].acts.splice(draggedActIdx, 1);
+        tripData.days[targetDIdx].acts.push(movedAct);
+        
+        draggedDayIdx = null; draggedActIdx = null;
+        saveAll(); render();
+    }
+
+    function render() {
+        document.getElementById('trip-title').innerText = tripData.title;
+        document.getElementById('trip-sub').innerText = tripData.sub;
+        document.getElementById('flight-arrival-container').innerHTML = `<div class="flight-card" contenteditable="true" oninput="tripData.arrivalFlight=this.innerHTML;saveAll()">${tripData.arrivalFlight}</div>`;
+        document.getElementById('flight-departure-container').innerHTML = `<div class="flight-card" contenteditable="true" oninput="tripData.departureFlight=this.innerHTML;saveAll()">${tripData.departureFlight}</div>`;
+
+        const schedCont = document.getElementById('schedule-container');
+        schedCont.innerHTML = '';
+        tripData.days.forEach((day, dIdx) => {
+            let html = `<div id="${day.id}" class="day-block">
+                <div class="day-title" contenteditable="true" oninput="tripData.days[${dIdx}].date=this.innerText;saveAll()">${day.date}</div>
+                <!-- 整個行程容器皆可作為拖曳投放目標 -->
+                <div class="acts-list" ondragover="dragOver(event)" ondrop="dropToDay(event, ${dIdx})" style="min-height: 20px; margin-bottom: 10px;">`;
+            
+            day.acts.forEach((act, aIdx) => {
+                html += `<div class="item-row" draggable="false" 
+                    ondragstart="dragStart(event, ${dIdx}, ${aIdx})" 
+                    ondragover="dragOver(event)" 
+                    ondrop="dropToItem(event, ${dIdx}, ${aIdx})">
+                    <!-- 拖曳手柄：滑鼠按下時才啟用整列拖曳，避免與文字選取衝突 -->
+                    <div class="drag-handle" onmousedown="this.closest('.item-row').draggable=true" onmouseup="this.closest('.item-row').draggable=false" onmouseleave="this.closest('.item-row').draggable=false">☰</div>
+                    <div class="time-box" contenteditable="true" oninput="tripData.days[${dIdx}].acts[${aIdx}].t=this.innerText;saveAll()">${act.t}</div>
+                    <div>
+                        <div class="desc-box" contenteditable="true" oninput="tripData.days[${dIdx}].acts[${aIdx}].d=this.innerText;saveAll()">${act.d}</div>
+                        <input type="text" class="link-input" placeholder="Map URL..." value="${act.u || ''}" oninput="tripData.days[${dIdx}].acts[${aIdx}].u=this.value;saveAll();render()">
+                    </div>
+                    <a href="${act.u || '#'}" target="_blank" class="map-link ${act.u ? '' : 'inactive'}">📍</a>
+                    <button class="btn-del" onclick="removeAct(${dIdx}, ${aIdx})">×</button>
+                </div>`;
+            });
+            html += `</div><button class="btn-add" onclick="addAct(${dIdx})">+ Add Activity 🍵</button></div>`;
+            schedCont.innerHTML += html;
+        });
+
+        const buyList = document.getElementById('buy-list');
+        buyList.innerHTML = '';
+        tripData.shopping.forEach((item, i) => {
+            buyList.innerHTML += `<div class="list-item">
+                <span contenteditable="true" oninput="tripData.shopping[${i}].n=this.innerText;saveAll()">${item.n}</span>
+                <span><span class="dest-tag" contenteditable="true" oninput="tripData.shopping[${i}].l=this.innerText;saveAll()">${item.l}</span>
+                <button class="btn-del" onclick="removeItem('shopping', ${i})">×</button></span>
+            </div>`;
+        });
+
+        updateCuisineDropdown();
+        renderFavs();
+        filterDays();
+    }
+
+    function toggleStatus(i) {
+        const statuses = ['wish', 'must', 'done'];
+        let current = tripData.favorites[i].status || 'wish';
+        let next = statuses[(statuses.indexOf(current) + 1) % statuses.length];
+        tripData.favorites[i].status = next;
+        saveAll();
+        renderFavs();
+    }
+
+    function renderFavs() {
+        const list = document.getElementById('fav-list');
+        const filter = document.getElementById('cuisineFilter').value;
+        list.innerHTML = '';
+        tripData.favorites.forEach((item, i) => {
+            if(filter !== 'all' && item.c !== filter) return;
+            const s = item.status || 'wish';
+            const label = s === 'must' ? '🔥 Must Go' : s === 'done' ? '✅ Visited' : '💗 Wishlist';
+            list.innerHTML += `<div class="list-item">
+                <div class="rest-info">
+                    <div class="status-badge status-${s}" onclick="toggleStatus(${i})">${label}</div>
+                    <span class="rest-name" contenteditable="true" oninput="tripData.favorites[${i}].n=this.innerText;saveAll()">${item.n}</span>
+                </div>
+                <div class="fav-right-controls">
+                    <span class="cuisine-tag" contenteditable="true" oninput="tripData.favorites[${i}].c=this.innerText;saveAll()">${item.c}</span>
+                    <a href="${item.u || '#'}" target="_blank" class="map-link ${item.u ? '' : 'inactive'}">📍</a>
+                    <button class="btn-del" onclick="removeItem('favorites', ${i})" style="margin-left:15px">×</button>
+                </div>
+            </div>`;
+        });
+    }
+
+    function updateCuisineDropdown() {
+        const dropdown = document.getElementById('cuisineFilter');
+        const cuisines = [...new Set(tripData.favorites.map(f => f.c))].filter(c => c);
+        const currentVal = dropdown.value;
+        dropdown.innerHTML = '<option value="all">🍽️ All Categories</option>';
+        cuisines.forEach(c => dropdown.innerHTML += `<option value="${c}">${c}</option>`);
+        dropdown.value = cuisines.includes(currentVal) ? currentVal : 'all';
+    }
+
+    function switchTab(e, id) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        e.currentTarget.classList.add('active');
+    }
+
+    function addItem(type) {
+        if(type === 'buy') {
+            const n = document.getElementById('buy-name'), l = document.getElementById('buy-dest');
+            if(!n.value) return;
+            tripData.shopping.push({n: n.value, l: l.value || 'General'});
+            n.value = ''; l.value = '';
+        } else {
+            const n = document.getElementById('fav-name'), c = document.getElementById('fav-cuisine'), u = document.getElementById('fav-url');
+            if(!n.value) return;
+            tripData.favorites.push({n: n.value, c: c.value || 'General', u: u.value || '', status: 'wish'});
+            n.value = ''; c.value = ''; u.value = '';
+        }
+        saveAll(); render();
+    }
+
+    function addAct(dIdx) { tripData.days[dIdx].acts.push({t:'00:00', d:'New activity...', u:''}); saveAll(); render(); }
+    function removeAct(dIdx, aIdx) { tripData.days[dIdx].acts.splice(aIdx, 1); saveAll(); render(); }
+    function removeItem(type, i) { tripData[type].splice(i, 1); saveAll(); render(); }
+    
+    function filterDays() {
+        const val = document.getElementById('dayFilter').value;
+        document.querySelectorAll('.day-block').forEach(b => b.style.display = (val==='all' || b.id===val) ? 'block' : 'none');
+        if(document.getElementById('flight-arrival-container'))
+           document.getElementById('flight-arrival-container').style.display = (val==='all' || val==='d1') ? 'block' : 'none';
+        
+        if(document.getElementById('flight-departure-container'))
+           document.getElementById('flight-departure-container').style.display = (val==='all' || val==='d5') ? 'block' : 'none';
+    }
+
+    render();
+</script>
+
+</body></html>
